@@ -1,70 +1,89 @@
-\## 0. 準備什麼（VM 上）
+專題建置說明（PublicZTAproject）
 
+一、(a) 環境 Environment
+1. 虛擬化環境：VirtualBox
+2. 作業系統：Ubuntu (VM)
+3. 網路：
+   - 內網測試：使用 VM IP 直接存取 (例如 http://192.168.1.104:8080)
+   - 若沒有固定 IP：可使用 No-IP（搭配 DUC 讓網域定期更新浮動 IP）
+4. 反向代理：
+   - Nginx（部署於 VM 上或以容器方式部署）
+   - 本專案採「子路徑」方式整合服務，例如 /api、/keycloak、/kibana、/opa、/filebrowser
 
+二、(b) 軟體 Software
+必備：
+1. Docker、Docker Compose
+2. Portainer（用 GUI 部署 Docker Compose Stack）
+3. Nginx（子路徑反向代理）
+4. Git（Portainer 從 GitHub 拉取 repo）
 
-> Portainer 與 Nginx 是VM 上另外安裝與管理，不在本 repo 的 compose 內。
+專案服務（由 docker-compose.yml 建置/啟動）：
+1. Frontend（React 靜態頁面，對外 port: 8080）
+2. API（Node.js/Express，透過 Kong 代理）
+3. Keycloak（OIDC 身分驗證，對外 port: 8081，並掛 /keycloak）
+4. Kong Gateway（API Gateway，對外 port: 8000/8001）
+5. ELK（Elasticsearch + Logstash + Kibana，Kibana 對外 port: 5601，並掛 /kibana）
+6. OPA（Open Policy Agent，對外 port: 8181，並掛 /opa）
+7. Filebeat（收集容器 log，送往 Logstash）
+8. Postgres（Keycloak/Kong DB）
+（選用）Filebrowser：此服務不一定在本 repo 的 compose 內，可能為另一台主機或另一個 Stack。
 
+三、(c) Dataset：如何取得？
+本專題非機器學習模型訓練專題，因此無固定 Dataset。
 
+四、(d) 實作流程：如何從 0 建置到可執行
 
-\- VirtualBox Ubuntu VM
+Step 0：VM 前置安裝
+1. 安裝 Docker / Docker Compose
+2. 安裝 Portainer（確保可用 http://<VM-IP>:9000 進入）
+3. 安裝/設定 Nginx（用於子路徑反向代理）
+4. （選用）No-IP + DUC：若公網 IP 浮動，設定網域自動更新
 
-\- Docker / Docker Compose
+Step 1：取得專案
+- git clone 專案 repo 到 VM
 
-\- Portainer（GUI 部署 Stack）
+Step 2：設定環境變數
+1. 將 .env.example.env 複製為 .env
+2. 編輯 .env，填入自己的：
+   - 網域（ZTA_DOMAIN）
+   - Keycloak 管理員帳密、DB 密碼
+   - Kong DB 帳密
+   - JWT_SECRET
+   - ELK_PASSWORD
+   - OIDC client secret / session secret（若 kong.yml 有使用）
+3. 注意：.env 不可上傳到 GitHub（避免敏感資訊外洩）
 
-\- Nginx（子路徑反向代理，/api /keycloak /kibana ...）
+Step 3：設定檔（需要自行修改）
+- elk/kibana/config/kibana.yml
+- frontend-src/keycloak.js
+- api/index.js、api/auth.js
+- docker-compose.yml
+- kong.yml
 
+Step 4：使用 Portainer 部署 Stack（GUI）
+1. Portainer → Stacks → Add stack
+2. 使用 Repository 方式部署
+3. 填入環境變數（.env 內容）
+4. Deploy stack，確認容器狀態皆為 running
 
+Step 5：Kong 初始化（第一次部署）
+因 Nginx 會把 /api/ 轉發到 Kong (:8000)，Kong 必須先初始化 DB 並匯入 kong.yml。
 
-如沒有固定ip 浮動ip可以使用 no-ip，no-ip會將固定ip對應至浮動ip，下載no-ip支援的 DUC 設定的網域每隔一段時間會抓浮動ip
+(1) 初始化 DB
+- docker exec -it kong kong migrations bootstrap
 
+(2) 匯入 kong.yml（每次修改 kong.yml 後都需重新匯入）
+- 匯入：
+  docker cp kong.rendered.yml kong:/tmp/kong.yml
+  docker exec -it kong kong config db_import /tmp/kong.yml
+  docker exec -it kong kong reload
 
+Step 6：Nginx 子路徑反向代理設定（整合入口）
+custom locations 配置，將各服務掛到同一網域下：
+（設定內容請見 nginx_proxy_manager_conf 檔案）
 
-\## 1. 更改env
-
-以下內容變數皆須自行修改 (需修改的變數前面有註解 \*# 自行修改\* 或 \*// 自行設定\* )
-已移除所有敏感資訊（網域/帳密/secret），因此必須自行設定環境變數與設定檔後才能部署需自行修改檔案
-elk\\kibana\\config\\kibana.yml
-frontend-src\\keycloak.js
-
-
-
-更改.envexample.env 檔案(相關檔案)
-
-api\\index.js以及
-api\\auth.js
-
-
-
-更改 .envexample.env 檔案 (相關檔案)
-docker-compose.yml
-
-kong.yml
-
-
-
-\## 2. 用 Portainer 部署（Stack）
-
-確保 portainer 容器是開啟的 用內網連結至portainer(已經部署nginx 申請網域也可以使用設定的https網域)
-
-Portainer → Stacks → Add stack
-
-使用Repository部署 連結 GitHub repo
-
-
-
-\## 3. Kong 初始化
-
-
-
-Nginx 會把 /api/ 轉發到 Kong (:8000)，因此 Kong 必須先初始化 DB 並匯入 kong.yml。
-
-
-
-\## 4.VM 上 Nginx 子路徑反向代理（路徑對照表）
-
-Nginx proxy manager 容器
-custom locations設定詳見nginx\_proxy\_manager\_conf檔案
-
-
-
+Step 7：驗證（確認可以正常執行）
+1. /frontend/ 可開啟前端頁面
+2. /keycloak/ 可進入 Keycloak 管理/登入頁
+3. /api/ 可經 Kong 轉發 API（未登入應被 OIDC 擋下、公開 share 例外）
+4. /kibana/ 可查看日誌（若 ELK 已啟用）
