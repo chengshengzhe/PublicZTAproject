@@ -31,7 +31,7 @@ frontend-src\\keycloak.js
 
 更改.envexample.env 檔案(相關檔案)
 
-api\\index.js
+api\\index.js以及
 api\\auth.js
 
 
