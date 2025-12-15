@@ -1,0 +1,150 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>下載 - {{FILENAME}}</title>
+  <style>
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      min-height: 100vh;
+      background-color: #2c3e50;
+      color: #ecf0f1;
+      margin: 0;
+      padding: 20px;
+      box-sizing: border-box;
+    }
+    .container {
+      background-color: #34495e;
+      padding: 40px;
+      border-radius: 12px;
+      box-shadow: 0 8px 25px rgba(0,0,0,0.3);
+      text-align: center;
+      width: 100%;
+      max-width: 480px;
+    }
+    h1 {
+      font-size: 24px;
+      margin-top: 0;
+      margin-bottom: 30px;
+      color: #fff;
+      font-weight: 500;
+    }
+    .thumbnail {
+      width: 100px;
+      height: 100px;
+      margin: 0 auto 30px;
+      background-color: #3498db;
+      border-radius: 10px;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+    .thumbnail svg {
+      width: 50px;
+      height: 50px;
+      color: white;
+    }
+    .details {
+      text-align: left;
+      margin-bottom: 35px;
+      border-top: 1px solid #4a627a;
+      padding-top: 20px;
+    }
+    .details p {
+      margin: 12px 0;
+      font-size: 16px;
+      color: #bdc3c7;
+      word-break: break-all;
+    }
+    .details p strong {
+      color: #ecf0f1;
+      margin-right: 10px;
+      font-weight: 500;
+    }
+    .actions {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      margin-bottom: 40px;
+    }
+    .button {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 12px 25px;
+      border-radius: 8px;
+      text-decoration: none;
+      font-size: 16px;
+      font-weight: 500;
+      transition: all 0.2s ease;
+      border: none;
+      cursor: pointer;
+    }
+    .button svg {
+      width: 20px;
+      height: 20px;
+      margin-right: 8px;
+    }
+    .download-btn {
+      background-color: #3498db;
+      color: white;
+    }
+    .download-btn:hover {
+      background-color: #2980b9;
+    }
+    .open-btn {
+      background-color: transparent;
+      color: #bdc3c7;
+      border: 1px solid #566f88;
+    }
+    .open-btn:hover {
+      background-color: #4a627a;
+      color: white;
+    }
+    .qr-code {
+      margin-top: 30px;
+      padding-top: 30px;
+      border-top: 1px solid #4a627a;
+    }
+    .qr-code img {
+      background: white;
+      padding: 10px;
+      border-radius: 8px;
+      max-width: 150px;
+      width: 100%;
+      height: auto;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>下載檔案</h1>
+    <div class="thumbnail">
+      <!-- Generic File Icon -->
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"></path><polyline points="14 2 14 8 20 8"></polyline></svg>
+    </div>
+
+    <div class="details">
+      <p><strong>名稱:</strong> {{FILENAME}}</p>
+      <p><strong>大小:</strong> {{FILESIZE}}</p>
+      <p><strong>上傳於:</strong> {{UPLOAD_DATE}}</p>
+    </div>
+
+    <div class="actions">
+      <a href="{{DOWNLOAD_URL}}" class="button download-btn" download>
+        <!-- Download Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+        下載
+      </a>
+    </div>
+    
+    <div class="qr-code">
+      <img src="{{QR_CODE_URL}}" alt="QR Code for download link">
+    </div>
+  </div>
+</body>
+</html>

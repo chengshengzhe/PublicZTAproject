@@ -1,0 +1,88 @@
+VM的 IP 以下 代稱為 VMIP
+NAS 的IP 代稱為 NASIP
+
+************************************************************************************
+/portainer → http://VMIP:9000
+
+location /portainer/ {
+  rewrite ^/portainer(/.*)$ $1 break;
+  proxy_pass http://VMIP:9000;
+}
+************************************************************************************
+/frontend → http://VMIP:8080
+
+location /frontend/ {
+  rewrite ^/frontend(/.*)$ /frontend/$1 break;
+  proxy_pass http://VMIP:8080;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+}
+************************************************************************************
+/keycloak → http://VMIP:8081
+
+location /keycloak/ {
+  proxy_pass http://VMIP:8081;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+}
+location = /keycloak { return 301 /keycloak/; }
+************************************************************************************
+/kibana → http://VMIP:5601
+
+location /kibana/ {
+  proxy_pass http://VMIP:5601;
+  proxy_http_version 1.1;
+
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+
+  proxy_set_header Upgrade $http_upgrade;
+  proxy_set_header Connection "upgrade";
+  default_type application/octet-stream;
+}
+location = /kibana { return 301 /kibana/; }
+************************************************************************************
+/api → http://VMIP:8000
+
+location /api/ {
+  proxy_pass http://VMIP:8000;
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header Authorization $http_authorization;
+  proxy_http_version 1.1;
+  proxy_set_header Connection "";
+}
+************************************************************************************
+/filebrowser → http://NASIP:30051
+
+location /filebrowser/ {
+  proxy_pass http://NASIP:30051; 
+  proxy_set_header Host $host;
+  proxy_set_header X-Real-IP $remote_addr;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-Prefix /filebrowser;
+}
+
+************************************************************************************
+/opa → http://VMIP:8181
+
+location = /opa {
+  return 301 /opa/;
+}
+
+location /opa/ {
+  proxy_pass http://VMIP:8181/;
+  proxy_set_header Host $host;
+  proxy_set_header X-Forwarded-Proto $scheme;
+  proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+  proxy_redirect off;
+}
+************************************************************************************
