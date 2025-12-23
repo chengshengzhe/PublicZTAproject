@@ -1,4 +1,4 @@
-# kong.yml (修正版：公開分享路由優先放行)
+# kong.yml (無 OIDC plugin)
 _format_version: "3.0"
 
 services:
@@ -6,57 +6,17 @@ services:
     url: http://api:3001
 
 routes:
-  # 規則 1：公開分享下載路由（最高優先級，必須放最前面）
-  - name: public-share-download
-    service: api-service
-    paths:
-      - /api/share/.*
-    strip_path: false   # 保留原始路徑，Express 需完整 path
-
-  # 規則 2：公開 API 路由（如有需要）
-  - name: api-public-routes
-    service: api-service
-    paths:
-      - /api/share
-      - /api/public-shares
-    strip_path: true   # 移除 /api 前綴
-
+  # 公開分享
   - name: public-share
+    service: api-service
     paths:
-      - /share
-      - /share/
-      - ~/share/([a-zA-Z0-9]+)
+      - /api/share/
     strip_path: false
-    service: api-service
-    methods:
-      - GET
+    methods: [GET]
 
-  # 規則 3：私有 API 路由（catch-all，最後比對，套用 OIDC）
-  - name: api-private-routes
+  # 其他 API（私有/需登入的部分交給 API 端驗證）
+  - name: api-all
     service: api-service
     paths:
-      - /api
-    strip_path: true
-    plugins:
-      - name: oidc
-        config:
-
-          #自行設定
-          client_id: "${KONG_OIDC_CLIENT_ID}"
-          client_secret: "${KONG_OIDC_CLIENT_SECRET}"
-          session_secret: "${KONG_OIDC_SESSION_SECRET}"
-
-          # 自行設定 Keycloak Discovery（用你的 /keycloak basePath）
-          discovery: "https://${ZTA_DOMAIN}/keycloak/realms/${KEYCLOAK_REALM}/.well-known/openid-configuration"
-
-          scope: "openid profile email"
-          response_type: "code"
-          logout_path: "/logout"
-          redirect_after_logout_uri: "/"
-
-          # 自行設定
-          session_secret: "${KONG_OIDC_SESSION_SECRET}"
-          
-          # 自行設定
-          introspection_endpoint: "https://${ZTA_DOMAIN}/keycloak/realms/${KEYCLOAK_REALM}/protocol/openid-connect/token/introspect"
-          userinfo_endpoint: "https://${ZTA_DOMAIN}/keycloak/realms/${KEYCLOAK_REALM}/protocol/openid-connect/userinfo"
+      - /api/
+    strip_path: false
